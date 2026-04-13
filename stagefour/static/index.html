@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>智能出行助手 Gateway</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --text: #e7ecf3;
+      --muted: #8b98a8;
+      --accent: #3b82f6;
+      --user: #2563eb;
+      --bot: #334155;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: ui-sans-serif, system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, #1e3a5f 0%, transparent 55%), var(--bg);
+      color: var(--text);
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 100px; }
+    h1 { font-size: 1.25rem; font-weight: 600; margin: 0 0 8px; }
+    .sub { color: var(--muted); font-size: 0.875rem; margin-bottom: 20px; }
+    .session { font-size: 0.75rem; color: var(--muted); word-break: break-all; margin-bottom: 16px; }
+    #log {
+      display: flex; flex-direction: column; gap: 12px;
+      min-height: 200px;
+    }
+    .msg { padding: 12px 14px; border-radius: 12px; max-width: 100%; white-space: pre-wrap; line-height: 1.5; }
+    .msg.user { align-self: flex-end; background: var(--user); color: #fff; }
+    .msg.assistant { align-self: flex-start; background: var(--bot); border: 1px solid #475569; }
+    .msg.err { align-self: stretch; background: #7f1d1d; border: 1px solid #b91c1c; color: #fecaca; }
+    .composer {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      padding: 12px 16px 20px;
+      background: linear-gradient(transparent, rgba(15,20,25,0.95));
+    }
+    .composer-inner { max-width: 720px; margin: 0 auto; display: flex; gap: 8px; }
+    textarea {
+      flex: 1; resize: none; min-height: 44px; max-height: 160px;
+      padding: 10px 12px; border-radius: 10px; border: 1px solid #334155;
+      background: var(--panel); color: var(--text); font-size: 0.95rem;
+    }
+    button {
+      padding: 0 18px; border-radius: 10px; border: none;
+      background: var(--accent); color: #fff; font-weight: 600; cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .toolbar button { background: #334155; font-weight: 500; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>智能出行助手（Gateway）</h1>
+    <p class="sub">多轮对话由服务端 Session 保存；刷新页面可保留会话（localStorage）。</p>
+    <div class="toolbar">
+      <button type="button" id="btnNew">新会话</button>
+      <button type="button" id="btnClearLog">仅清空显示</button>
+    </div>
+    <div class="session">session_id: <span id="sid">（尚未建立）</span></div>
+    <div id="log"></div>
+  </div>
+  <div class="composer">
+    <div class="composer-inner">
+      <textarea id="input" rows="1" placeholder="输入消息，Enter 发送，Shift+Enter 换行"></textarea>
+      <button type="button" id="send">发送</button>
+    </div>
+  </div>
+  <script>
+    const KEY = "didi_gateway_session_id";
+    const logEl = document.getElementById("log");
+    const sidEl = document.getElementById("sid");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("send");
+
+    function getSessionId() {
+      return localStorage.getItem(KEY) || null;
+    }
+    function setSessionId(id) {
+      if (id) localStorage.setItem(KEY, id);
+      else localStorage.removeItem(KEY);
+      sidEl.textContent = id || "（尚未建立）";
+    }
+    setSessionId(getSessionId());
+
+    function appendMsg(role, text, isErr) {
+      const d = document.createElement("div");
+      d.className = "msg " + (isErr ? "err" : role);
+      d.textContent = text;
+      logEl.appendChild(d);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    async function send() {
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
+      sendBtn.disabled = true;
+      appendMsg("user", text);
+
+      try {
+        const r = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: getSessionId(), message: text }),
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          const d = data.detail;
+          const errText = typeof d === "string" ? d : (Array.isArray(d) ? d.map((x) => x.msg || x).join("; ") : JSON.stringify(d || data));
+          throw new Error(errText || r.statusText);
+        }
+        if (data.session_id) setSessionId(data.session_id);
+        appendMsg("assistant", data.reply || "");
+      } catch (e) {
+        appendMsg("assistant", String(e.message || e), true);
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    }
+
+    sendBtn.addEventListener("click", send);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        send();
+      }
+    });
+
+    document.getElementById("btnNew").addEventListener("click", async () => {
+      const old = getSessionId();
+      if (old) {
+        try { await fetch("/api/session/" + encodeURIComponent(old), { method: "DELETE" }); } catch (_) {}
+      }
+      setSessionId(null);
+      logEl.innerHTML = "";
+      appendMsg("assistant", "已开始新会话。");
+    });
+
+    document.getElementById("btnClearLog").addEventListener("click", () => {
+      logEl.innerHTML = "";
+    });
+  </script>
+</body>
+</html>
