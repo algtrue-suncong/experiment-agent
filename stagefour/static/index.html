@@ -20,15 +20,37 @@
       background: radial-gradient(1200px 600px at 20% -10%, #1e3a5f 0%, transparent 55%), var(--bg);
       color: var(--text);
     }
-    .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 100px; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 100px; min-width: 0; }
     h1 { font-size: 1.25rem; font-weight: 600; margin: 0 0 8px; }
     .sub { color: var(--muted); font-size: 0.875rem; margin-bottom: 20px; }
-    .session { font-size: 0.75rem; color: var(--muted); word-break: break-all; margin-bottom: 16px; }
+    .session { margin-bottom: 16px; max-width: 100%; min-width: 0; }
+    .session-label {
+      font-size: 0.75rem; color: var(--muted); margin-bottom: 6px;
+    }
+    .session-id {
+      display: block;
+      max-width: 100%;
+      font-size: 0.7rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 10px;
+      line-height: 1.45;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
     #log {
       display: flex; flex-direction: column; gap: 12px;
       min-height: 200px;
     }
-    .msg { padding: 12px 14px; border-radius: 12px; max-width: 100%; white-space: pre-wrap; line-height: 1.5; }
+    .msg {
+      padding: 12px 14px; border-radius: 12px; max-width: 100%; min-width: 0;
+      white-space: pre-wrap; line-height: 1.5;
+      word-break: break-word; overflow-wrap: anywhere;
+    }
     .msg.user { align-self: flex-end; background: var(--user); color: #fff; }
     .msg.assistant { align-self: flex-start; background: var(--bot); border: 1px solid #475569; }
     .msg.err { align-self: stretch; background: #7f1d1d; border: 1px solid #b91c1c; color: #fecaca; }
@@ -60,7 +82,10 @@
       <button type="button" id="btnNew">新会话</button>
       <button type="button" id="btnClearLog">仅清空显示</button>
     </div>
-    <div class="session">session_id: <span id="sid">（尚未建立）</span></div>
+    <div class="session">
+      <div class="session-label">session_id</div>
+      <div class="session-id" id="sid">（尚未建立）</div>
+    </div>
     <div id="log"></div>
   </div>
   <div class="composer">

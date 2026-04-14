@@ -47,4 +47,8 @@ class SessionStore:
 
     async def stats(self) -> dict:
         async with self._meta_lock:
-            return {"sessions": len(self._sessions)}
+            out: dict = {"sessions": len(self._sessions)}
+            if self._sessions:
+                first = next(iter(self._sessions.values()))
+                out["first_session_messages"] = first.messages
+            return out
