@@ -5,11 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2f3fb3e7-5950-4fe5-a4de-6963f2425b83" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/stagefour/didi_agent_pro.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/stagefour/didi_streamable_http_client.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/stagefour/gaode_mcp_server.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/stagefour/test1.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.ai/mcp/mcp.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/stagefive/audit_store.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/stagefive/auth.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/stagefive/context_memory.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/stagefive/data/audit/.gitkeep" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/stagefive/data/memory/.gitkeep" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/stagefive/long_term_memory.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stagefive/didi_agent_pro.py" beforeDir="false" afterPath="$PROJECT_DIR$/stagefive/didi_agent_pro.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stagefive/gateway.py" beforeDir="false" afterPath="$PROJECT_DIR$/stagefive/gateway.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stagefive/session_store.py" beforeDir="false" afterPath="$PROJECT_DIR$/stagefive/session_store.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stagefive/static/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/stagefive/static/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -17,7 +24,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="22" />
+    <option name="cachedIndexableFilesCount" value="35" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -53,14 +60,24 @@
     "Python.gaode_mcp_server.executor": "Run",
     "Python.main (1).executor": "Run",
     "Python.main.executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
     "git-widget-placeholder": "master",
-    "last_opened_file_path": "/Users/suncong/pycode/experiment-agent/stagefour",
-    "node.js.selected.package.tslint": "(autodetect)"
+    "last_opened_file_path": "/Users/suncong/pycode/experiment-agent",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "ml.llm.LLMConfigurable"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/stagefour" />
       <recent name="$PROJECT_DIR$/stagetwo" />
     </key>
@@ -191,7 +208,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-98f27166c754-ba05f1cad1b1-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-242.21829.153" />
+        <option value="bundled-python-sdk-b63d5a1f7c97-b61e75351b1f-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-261.22158.340" />
       </set>
     </attachedChunks>
   </component>
@@ -205,6 +222,9 @@
       <updated>1775116598317</updated>
     </task>
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="UnknownFeatures">
     <option featureType="com.intellij.fileTypeFactory" implementationName=".env" />

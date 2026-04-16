@@ -65,22 +65,43 @@
       padding: 10px 12px; border-radius: 10px; border: 1px solid #334155;
       background: var(--panel); color: var(--text); font-size: 0.95rem;
     }
+    input[type="text"], input[type="password"] {
+      flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid #334155;
+      background: var(--panel); color: var(--text); font-size: 0.9rem;
+    }
     button {
       padding: 0 18px; border-radius: 10px; border: none;
       background: var(--accent); color: #fff; font-weight: 600; cursor: pointer;
     }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
     .toolbar button { background: #334155; font-weight: 500; font-size: 0.8rem; }
+    .login-panel {
+      background: var(--panel); border: 1px solid #334155; border-radius: 12px;
+      padding: 14px; margin-bottom: 16px;
+    }
+    .login-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .badge { font-size: 0.75rem; color: var(--muted); }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>智能出行助手（Gateway）</h1>
-    <p class="sub">多轮对话由服务端 Session 保存；刷新页面可保留会话（localStorage）。</p>
+    <p class="sub">短期记忆：最近 K 轮 + 会话状态 + 滚动摘要；工具原文在服务端审计目录。长期记忆见 data/memory/&lt;用户&gt;.md。</p>
+    <div id="authPanel" class="login-panel" style="display:none;">
+      <div class="badge">已启用登录（GATEWAY_USERS）</div>
+      <div class="login-row">
+        <input type="text" id="loginUser" placeholder="用户名" autocomplete="username" />
+        <input type="password" id="loginPass" placeholder="密码" autocomplete="current-password" />
+        <button type="button" id="btnLogin">登录</button>
+      </div>
+      <p class="badge" id="authHint"></p>
+    </div>
     <div class="toolbar">
       <button type="button" id="btnNew">新会话</button>
       <button type="button" id="btnClearLog">仅清空显示</button>
+      <button type="button" id="btnLogout" style="display:none;">退出登录</button>
+      <span class="badge" id="userBadge"></span>
     </div>
     <div class="session">
       <div class="session-label">session_id</div>
@@ -96,10 +117,17 @@
   </div>
   <script>
     const KEY = "didi_gateway_session_id";
+    const TOKEN_KEY = "didi_gateway_token";
     const logEl = document.getElementById("log");
     const sidEl = document.getElementById("sid");
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
+    const authPanel = document.getElementById("authPanel");
+    const btnLogout = document.getElementById("btnLogout");
+    const userBadge = document.getElementById("userBadge");
+    const authHint = document.getElementById("authHint");
+
+    let authRequired = false;
 
     function getSessionId() {
       return localStorage.getItem(KEY) || null;
@@ -110,6 +138,78 @@
       sidEl.textContent = id || "（尚未建立）";
     }
     setSessionId(getSessionId());
+
+    function getToken() {
+      return localStorage.getItem(TOKEN_KEY) || null;
+    }
+    function setToken(t) {
+      if (t) localStorage.setItem(TOKEN_KEY, t);
+      else localStorage.removeItem(TOKEN_KEY);
+    }
+
+    function authHeaders() {
+      const t = getToken();
+      const h = { "Content-Type": "application/json" };
+      if (t) h["Authorization"] = "Bearer " + t;
+      return h;
+    }
+
+    async function refreshAuthUi() {
+      try {
+        const r = await fetch("/api/auth/status");
+        const d = await r.json().catch(() => ({}));
+        authRequired = !!d.auth_required;
+        authPanel.style.display = authRequired ? "block" : "none";
+        btnLogout.style.display = authRequired && getToken() ? "inline-block" : "none";
+        if (authRequired && !getToken()) {
+          authHint.textContent = "请先登录后再对话。";
+          sendBtn.disabled = true;
+        } else {
+          authHint.textContent = "";
+          sendBtn.disabled = false;
+        }
+        userBadge.textContent = authRequired && getToken() ? "已登录" : (authRequired ? "未登录" : "开发模式 guest");
+      } catch (_) {
+        authRequired = false;
+        authPanel.style.display = "none";
+      }
+    }
+
+    document.getElementById("btnLogin").addEventListener("click", async () => {
+      const username = document.getElementById("loginUser").value.trim();
+      const password = document.getElementById("loginPass").value;
+      if (!username || !password) {
+        authHint.textContent = "请输入用户名和密码";
+        return;
+      }
+      try {
+        const r = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.detail || r.statusText);
+        setToken(data.access_token);
+        authHint.textContent = "登录成功，用户：" + (data.user_id || username);
+        sendBtn.disabled = false;
+        btnLogout.style.display = "inline-block";
+        userBadge.textContent = "已登录";
+        setSessionId(null);
+        logEl.innerHTML = "";
+        appendMsg("assistant", "已登录，已开始新会话上下文。");
+      } catch (e) {
+        authHint.textContent = String(e.message || e);
+      }
+    });
+
+    btnLogout.addEventListener("click", () => {
+      setToken(null);
+      setSessionId(null);
+      logEl.innerHTML = "";
+      refreshAuthUi();
+      appendMsg("assistant", "已退出登录。");
+    });
 
     function appendMsg(role, text, isErr) {
       const d = document.createElement("div");
@@ -122,6 +222,10 @@
     async function send() {
       const text = input.value.trim();
       if (!text) return;
+      if (authRequired && !getToken()) {
+        appendMsg("assistant", "请先登录。", true);
+        return;
+      }
       input.value = "";
       sendBtn.disabled = true;
       appendMsg("user", text);
@@ -129,7 +233,7 @@
       try {
         const r = await fetch("/api/chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders(),
           body: JSON.stringify({ session_id: getSessionId(), message: text }),
         });
         const data = await r.json().catch(() => ({}));
@@ -159,7 +263,9 @@
     document.getElementById("btnNew").addEventListener("click", async () => {
       const old = getSessionId();
       if (old) {
-        try { await fetch("/api/session/" + encodeURIComponent(old), { method: "DELETE" }); } catch (_) {}
+        try {
+          await fetch("/api/session/" + encodeURIComponent(old), { method: "DELETE", headers: authHeaders() });
+        } catch (_) {}
       }
       setSessionId(null);
       logEl.innerHTML = "";
@@ -169,6 +275,8 @@
     document.getElementById("btnClearLog").addEventListener("click", () => {
       logEl.innerHTML = "";
     });
+
+    refreshAuthUi();
   </script>
 </body>
 </html>
